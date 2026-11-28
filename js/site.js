@@ -185,6 +185,41 @@
     return new Date(utc(iso)).toLocaleDateString("en-US", { timeZone: "UTC", month: "long", day: "numeric" });
   }
 
+  /* The elders, so a preacher's name can link to his profile on the Leadership page.
+     A name matches when it holds the full name, or is the last name alone
+     (with or without "Pastor"). Guests match nothing and stay plain text. */
+  var ELDERS = cfg.elders || [];
+  function elderFor(name) {
+    var n = (name || "").toLowerCase().replace(/\s+/g, " ").trim();
+    if (!n) return null;
+    for (var i = 0; i < ELDERS.length; i++) {
+      var full = ELDERS[i].name.toLowerCase();
+      var last = full.split(" ").pop();
+      if (n.indexOf(full) >= 0 || n === last || n === "pastor " + last) return ELDERS[i];
+    }
+    return null;
+  }
+  function preacherNode(name) {
+    var e = elderFor(name);
+    if (!e) return doc.createTextNode(name);
+    var a = make("a", "", name);
+    a.href = "leadership.html#" + e.id;
+    return a;
+  }
+
+  /* Church seasons named in the sheet's Season column add a line to the home page title. */
+  var SEASON_LINES = [
+    [/^advent/i, "this Advent Season"],
+    [/^christmas/i, "this Christmas Season"],
+    [/^epiphany/i, "this Epiphany Season"],
+    [/^lent/i, "this Lenten Season"],
+    [/^easter/i, "this Easter Season"]
+  ];
+  function seasonLine(season) {
+    for (var i = 0; i < SEASON_LINES.length; i++) if (SEASON_LINES[i][0].test(season || "")) return SEASON_LINES[i][1];
+    return "";
+  }
+
   function showNotice(message) {
     if (!noticeBox) return;
     noticeBox.querySelector("p").textContent = message || "";
@@ -219,15 +254,24 @@
 
     setHeroImage(now.length ? now[0].image : "");
 
+    var title = hero.querySelector("h1");
+    if (title) {
+      var line = seasonLine(now.length ? now[0].season : "");
+      var extra = title.querySelector(".season-line");
+      if (line && !extra) { extra = make("span", "season-line"); title.appendChild(extra); }
+      if (extra) { extra.textContent = line; extra.hidden = !line; }
+    }
+
     var weekBox = doc.getElementById("this-week");
     if (weekBox) {
       weekBox.textContent = "";
       now.forEach(function (x, i) {
         var p = make("p");
         p.appendChild(make("strong", "", (i === 0 ? "This Week" : (x.season || "Also")) + ": "));
-        p.appendChild(doc.createTextNode(x.preacher
-          ? x.preacher + " will preach on " + x.text + "."
-          : "The sermon text is " + x.text + "."));
+        if (x.preacher) {
+          p.appendChild(preacherNode(x.preacher));
+          p.appendChild(doc.createTextNode(" will preach on " + x.text + "."));
+        } else p.appendChild(doc.createTextNode("The sermon text is " + x.text + "."));
         weekBox.appendChild(p);
       });
       weekBox.hidden = !now.length;
@@ -242,7 +286,12 @@
         last = past.filter(function (x) { return x.date === lastDate; })[0];
       }
       var recent = last && (utc(today) - utc(last.date)) / 864e5 <= 8;
-      lastBox.textContent = recent && last.preacher ? "Missed last week's sermon by " + last.preacher + "?" : "";
+      lastBox.textContent = "";
+      if (recent && last.preacher) {
+        lastBox.appendChild(doc.createTextNode("Missed last week's sermon by "));
+        lastBox.appendChild(preacherNode(last.preacher));
+        lastBox.appendChild(doc.createTextNode("?"));
+      }
     }
 
     var sched = doc.getElementById("schedule");
@@ -255,7 +304,9 @@
         var t = make("span", "t", x.text);
         if (x.season && !/^ordinary/i.test(x.season)) t.appendChild(make("small", "", x.season));
         li.appendChild(t);
-        li.appendChild(make("span", "p", x.preacher));
+        var who = make("span", "p");
+        who.appendChild(preacherNode(x.preacher));
+        li.appendChild(who);
         list.appendChild(li);
       });
       sched.hidden = !later.length;

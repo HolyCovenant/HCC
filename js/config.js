@@ -10,6 +10,17 @@ window.HCC = {
   seriesFolder: "series-images/",
   defaultImage: "hcc.jpg",
 
+  // The elders. A preacher's name on the home page links to his profile on the
+  // Leadership page when it matches one of these. The id is the last name in
+  // lower case and must match the id on his entry in leadership.html.
+  elders: [
+    { id: "bair", name: "Daniel Bair" },
+    { id: "dicicco", name: "John DiCicco" },
+    { id: "godoy", name: "Dan Godoy" },
+    { id: "papendorf", name: "Dave Papendorf" },
+    { id: "williams", name: "Tad Williams" }
+  ],
+
   // How many upcoming services to list at the bottom of the home page.
   upcomingCount: 5,
 
