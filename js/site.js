@@ -171,7 +171,8 @@
     var head = rows[0].map(function (h) { return h.trim().toLowerCase(); });
     var iD = head.indexOf("date"), iS = head.indexOf("season"), iT = head.indexOf("text"),
         iP = head.indexOf("preacher"), iR = head.indexOf("preacherraw"),
-        iI = head.indexOf("image"), iN = head.indexOf("notice");
+        iI = head.indexOf("image"), iN = -1;
+    head.forEach(function (h, k) { if (iN < 0 && h.indexOf("notice") === 0) iN = k; });   // "Notice", "Notice Below", ...
     rows.slice(1).forEach(function (r) {
       if (iN >= 0 && !out.notice && r[iN] && r[iN].trim()) out.notice = r[iN].trim().slice(0, 300);
       if (iD < 0 || iT < 0) return;
@@ -223,6 +224,19 @@
     if (!e) return doc.createTextNode(name);
     var a = make("a", "", name);
     a.href = "leadership.html#" + e.id;
+    return a;
+  }
+
+  /* A Scripture reference becomes a link to that passage at esv.org, opened in a new tab. */
+  function esvUrl(ref) {
+    return "https://www.esv.org/" + encodeURIComponent(ref.replace(/\s+/g, " ").trim()).replace(/%20/g, "+").replace(/%3A/gi, ":").replace(/%2C/gi, ",") + "/";
+  }
+  function refNode(ref) {
+    if (!/^\d?\s?[A-Za-z ]+\s\d/.test(ref)) return doc.createTextNode(ref);
+    var a = make("a", "", ref);
+    a.href = esvUrl(ref);
+    a.target = "_blank";
+    a.rel = "noopener";
     return a;
   }
 
@@ -289,8 +303,10 @@
         p.appendChild(make("strong", "", (i === 0 ? "This Week" : (x.season || "Also")) + ": "));
         if (x.preacher) {
           p.appendChild(preacherNode(x.preacher));
-          p.appendChild(doc.createTextNode(" will preach on " + x.text + "."));
-        } else p.appendChild(doc.createTextNode("The sermon text is " + x.text + "."));
+          p.appendChild(doc.createTextNode(" will preach on "));
+        } else p.appendChild(doc.createTextNode("The sermon text is "));
+        p.appendChild(refNode(x.text));
+        p.appendChild(doc.createTextNode("."));
         weekBox.appendChild(p);
       });
       weekBox.hidden = !now.length;
@@ -320,7 +336,8 @@
       later.forEach(function (x) {
         var li = make("li");
         li.appendChild(make("span", "d", monthDay(x.date)));
-        var t = make("span", "t", x.text);
+        var t = make("span", "t");
+        t.appendChild(refNode(x.text));
         if (x.season && !/^ordinary/i.test(x.season)) t.appendChild(make("small", "", x.season));
         li.appendChild(t);
         var who = make("span", "p");
