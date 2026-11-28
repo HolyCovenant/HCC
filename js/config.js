@@ -10,6 +10,11 @@ window.HCC = {
   seriesFolder: "series-images/",
   defaultImage: "hcc.jpg",
 
+  // Contact form check (Cloudflare Turnstile). Paste the SITE KEY between the
+  // quotes to switch it on; leave it empty for no check. The SECRET key never
+  // goes here: it belongs only in Formspree's CAPTCHA settings.
+  turnstileSiteKey: "0x4AAAAAAGXSSyL0eg52d32-",
+
   // The elders. A preacher's name on the home page links to his profile on the
   // Leadership page when it matches one of these. The id is the last name in
   // lower case and must match the id on his entry in leadership.html.

@@ -227,6 +227,7 @@ strong { font-weight: 600; }
 .fields textarea { resize: vertical; min-height: 9rem; }
 .fields input:focus-visible, .fields textarea:focus-visible { outline: 2px solid var(--gold-deep); outline-offset: 1px; }
 .fields .btn { justify-self: start; }
+.fields .cf-turnstile { min-height: 65px; }
 .fields .trap { position: absolute; left: -5000px; }
 .form-status { margin: 0; font-weight: 400; min-height: 1.7em; }
 .form-status.bad { color: #8f2a1c; }

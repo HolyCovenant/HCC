@@ -54,10 +54,28 @@
   /* ---------- Contact form: send without leaving the page ---------- */
   var contactForm = doc.getElementById("contact-form-el");
   if (contactForm && window.fetch && window.FormData) {
+    /* Optional "are you human" check (Cloudflare Turnstile). It appears only when
+       a site key is set in config.js, and adds its answer to the form by itself. */
+    if (cfg.turnstileSiteKey && !fromFolder) {
+      var check = make("div", "cf-turnstile");
+      check.setAttribute("data-sitekey", cfg.turnstileSiteKey);
+      check.setAttribute("data-theme", "light");
+      contactForm.insertBefore(check, contactForm.querySelector("button"));
+      var ts = doc.createElement("script");
+      ts.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      ts.async = true; ts.defer = true;
+      doc.head.appendChild(ts);
+    }
     contactForm.addEventListener("submit", function (e) {
       e.preventDefault();
       var status = contactForm.querySelector(".form-status");
       var button = contactForm.querySelector("button");
+      var token = contactForm.querySelector('[name="cf-turnstile-response"]');
+      if (cfg.turnstileSiteKey && !fromFolder && !(token && token.value)) {
+        status.className = "form-status bad";
+        status.textContent = "Please wait a moment for the check above to finish, then press Send again.";
+        return;
+      }
       button.disabled = true;
       status.className = "form-status";
       status.textContent = "Sending...";
@@ -69,6 +87,7 @@
         })
         .catch(function () {
           button.disabled = false;
+          if (window.turnstile && window.turnstile.reset) { try { window.turnstile.reset(); } catch (err) {} }
           status.className = "form-status bad";
           status.textContent = "Your message could not be sent. Please try again, or use the email address on this page.";
         });
