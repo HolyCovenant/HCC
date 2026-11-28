@@ -111,6 +111,15 @@
     probe.src = icon.getAttribute("href");
   }
 
+  /* ---------- Photographs fade in as they finish loading ---------- */
+  all("main img").forEach(function (img) {
+    if (img.closest(".hero") || (img.complete && img.naturalWidth > 0)) return;
+    img.classList.add("fade");
+    var show = function () { if (img.complete && img.naturalWidth > 0) img.classList.add("loaded"); };
+    img.addEventListener("load", show);
+    setTimeout(function () { img.classList.add("loaded"); }, 4000);   // never leave a picture hidden
+  });
+
   /* ---------- Sections below the fold ease in as they are reached ---------- */
   var reveals = all(".reveal");
   var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
